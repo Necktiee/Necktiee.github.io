@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude API Authentication Guide - Long-Lived Tokens</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        h2 {
+            color: #764ba2;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #667eea;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        ol, ul {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        a:hover {
+            border-bottom-color: #667eea;
+        }
+
+        .step {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .code-language {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Claude API Authentication Guide</h1>
+        <p class="subtitle">How to Create and Use Long-Lived Authentication Tokens</p>
+
+        <div class="info">
+            <strong>What is a Long-Lived Authentication Token?</strong><br>
+            A long-lived authentication token (API key) is a credential that allows you to authenticate with the Claude API for extended periods. Unlike short-lived tokens, these keys don't expire frequently and are ideal for production applications.
+        </div>
+
+        <h2>Step 1: Create Your API Key</h2>
+
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>Sign in to Anthropic Console</strong>
+            <p>Navigate to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> and sign in with your Anthropic account.</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <strong>Access API Keys Section</strong>
+            <p>Once logged in, click on your profile or navigate to the API Keys section in the dashboard.</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span>
+            <strong>Generate New Key</strong>
+            <p>Click "Create Key" or "Generate API Key" button. You may be asked to:</p>
+            <ul>
+                <li>Name your key (e.g., "Production API", "Development Key")</li>
+                <li>Set permissions or scope (if available)</li>
+                <li>Confirm your identity</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span>
+            <strong>Save Your Key Securely</strong>
+            <p>The API key will be displayed only once. Copy it immediately and store it securely.</p>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Security Warning:</strong><br>
+            Never share your API key publicly or commit it to version control systems. Treat it like a password!
+        </div>
+
+        <h2>Step 2: Using Your API Key</h2>
+
+        <h3>Environment Variables (Recommended)</h3>
+        <p>Store your API key in an environment variable:</p>
+
+        <div class="code-language">Bash</div>
+        <pre><code>export ANTHROPIC_API_KEY='your-api-key-here'</code></pre>
+
+        <p>For permanent setup, add it to your <code>~/.bashrc</code> or <code>~/.zshrc</code>:</p>
+
+        <div class="code-language">Bash</div>
+        <pre><code>echo "export ANTHROPIC_API_KEY='your-api-key-here'" >> ~/.bashrc
+source ~/.bashrc</code></pre>
+
+        <h3>Python Example</h3>
+        <div class="code-language">Python</div>
+        <pre><code>import anthropic
+import os
+
+# Initialize the client
+client = anthropic.Anthropic(
+    api_key=os.environ.get("ANTHROPIC_API_KEY")
+)
+
+# Create a message
+message = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    messages=[
+        {"role": "user", "content": "Hello, Claude!"}
+    ]
+)
+
+print(message.content)</code></pre>
+
+        <h3>JavaScript/Node.js Example</h3>
+        <div class="code-language">JavaScript</div>
+        <pre><code>import Anthropic from '@anthropic-ai/sdk';
+
+const client = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+async function main() {
+    const message = await client.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 1024,
+        messages: [
+            { role: 'user', content: 'Hello, Claude!' }
+        ],
+    });
+
+    console.log(message.content);
+}
+
+main();</code></pre>
+
+        <h3>cURL Example</h3>
+        <div class="code-language">Bash</div>
+        <pre><code>curl https://api.anthropic.com/v1/messages \
+  -H "content-type: application/json" \
+  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -d '{
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 1024,
+    "messages": [
+      {"role": "user", "content": "Hello, Claude!"}
+    ]
+  }'</code></pre>
+
+        <h2>Best Practices for API Key Management</h2>
+
+        <h3>1. Use Environment Variables</h3>
+        <p>Never hardcode API keys in your source code. Always use environment variables or secure configuration management tools.</p>
+
+        <h3>2. Use .env Files (Development)</h3>
+        <p>For local development, use <code>.env</code> files with libraries like <code>python-dotenv</code> or <code>dotenv</code>:</p>
+
+        <div class="code-language">.env</div>
+        <pre><code>ANTHROPIC_API_KEY=your-api-key-here</code></pre>
+
+        <div class="warning">
+            <strong>Important:</strong> Add <code>.env</code> to your <code>.gitignore</code> file!
+        </div>
+
+        <h3>3. Rotate Keys Regularly</h3>
+        <p>For security purposes, rotate your API keys periodically, especially if:</p>
+        <ul>
+            <li>A key may have been exposed</li>
+            <li>Team members with access have left</li>
+            <li>You're implementing a scheduled rotation policy</li>
+        </ul>
+
+        <h3>4. Use Separate Keys for Different Environments</h3>
+        <p>Create different API keys for:</p>
+        <ul>
+            <li>Development</li>
+            <li>Staging</li>
+            <li>Production</li>
+        </ul>
+
+        <h3>5. Monitor API Usage</h3>
+        <p>Regularly check your API usage in the Anthropic Console to detect any unusual activity.</p>
+
+        <h2>Security Checklist</h2>
+
+        <div class="success">
+            <strong>✓ Do's:</strong>
+            <ul style="margin-top: 10px;">
+                <li>Store keys in environment variables or secure vaults</li>
+                <li>Use HTTPS for all API requests</li>
+                <li>Implement rate limiting in your application</li>
+                <li>Monitor and log API usage</li>
+                <li>Rotate keys periodically</li>
+            </ul>
+        </div>
+
+        <div class="warning">
+            <strong>✗ Don'ts:</strong>
+            <ul style="margin-top: 10px;">
+                <li>Commit API keys to version control (GitHub, GitLab, etc.)</li>
+                <li>Share keys via email or chat</li>
+                <li>Use the same key across all environments</li>
+                <li>Expose keys in client-side code (browser JavaScript)</li>
+                <li>Log API keys in application logs</li>
+            </ul>
+        </div>
+
+        <h2>Troubleshooting</h2>
+
+        <h3>401 Unauthorized Error</h3>
+        <p>This usually means:</p>
+        <ul>
+            <li>Your API key is incorrect or expired</li>
+            <li>The key wasn't properly loaded from environment variables</li>
+            <li>The key has been revoked</li>
+        </ul>
+
+        <h3>429 Rate Limit Error</h3>
+        <p>You've exceeded the rate limits. Implement exponential backoff and consider upgrading your plan if needed.</p>
+
+        <h3>Environment Variable Not Loading</h3>
+        <p>Make sure to:</p>
+        <ul>
+            <li>Restart your terminal after setting environment variables</li>
+            <li>Use the correct syntax for your shell</li>
+            <li>Verify with: <code>echo $ANTHROPIC_API_KEY</code></li>
+        </ul>
+
+        <h2>Additional Resources</h2>
+
+        <ul>
+            <li><a href="https://docs.anthropic.com/en/api/getting-started" target="_blank">Official Anthropic API Documentation</a></li>
+            <li><a href="https://console.anthropic.com" target="_blank">Anthropic Console</a></li>
+            <li><a href="https://docs.anthropic.com/en/api/rate-limits" target="_blank">API Rate Limits</a></li>
+            <li><a href="https://docs.anthropic.com/en/api/errors" target="_blank">Error Codes Reference</a></li>
+        </ul>
+
+        <footer>
+            <p>Created with Claude API | <a href="https://nextzus.me">nextzus.me</a></p>
+            <p style="margin-top: 10px; font-size: 0.9em;">Last updated: October 2025</p>
+        </footer>
+    </div>
+</body>
+</html>
